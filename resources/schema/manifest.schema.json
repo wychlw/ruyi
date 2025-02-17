@@ -1,0 +1,322 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://www.ruyisdk.org/schema/manifest.schema.json",
+    "title": "Packages Index Manifest",
+    "description": "The manifest file for the packages index.",
+    "type": "object",
+    "properties": {
+        "format": {
+            "description": "The format version of the package file.",
+            "enum": [
+                "v1"
+            ]
+        },
+        "slug": {
+            "description": "The slug of the package.",
+            "type": "string"
+        },
+        "kind": {
+            "description": "The kind of the package.",
+            "type": "array",
+            "items": {
+                "enum": [
+                    "binary",
+                    "blob",
+                    "source",
+                    "toolchain",
+                    "emulator",
+                    "provisionable"
+                ]
+            }
+        },
+        "desc": {
+            "description": "The description of the package.",
+            "type": "string"
+        },
+        "doc_uri": {
+            "description": "The documentation URI of the package.",
+            "type": "string"
+        },
+        "vendor": {
+            "description": "The vendor of the package.",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "The name of the vendor.",
+                    "type": "string"
+                },
+                "eula": {
+                    "description": "The EULA of the vendor.",
+                    "const": null
+                }
+            }
+        },
+        "service_level": {
+            "description": "The service level of the package.",
+            "type": "object",
+            "properties": {
+                "level": {
+                    "description": "The service level of the package.",
+                    "enum": [
+                        "untested",
+                        "known_issue"
+                    ]
+                },
+                "params": {
+                    "description": "The parameters of the service level.",
+                    "type": "object"
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "level": {
+                                "const": "known_issue"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "msgid": {
+                                "description": "The message ID of the known issue.",
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "distfile": {
+            "description": "The distribution file of the package.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "The name of the distribution file.",
+                        "type": "string"
+                    },
+                    "url": {
+                        "description": "The URL of the distribution file.",
+                        "type": "string"
+                    },
+                    "restrict": {
+                        "description": "The restriction of the distribution file.",
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "enum": [
+                                        "mirror",
+                                        "fetch"
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "size": {
+                        "description": "The size of the distribution file.",
+                        "type": "integer"
+                    },
+                    "checksums": {
+                        "description": "The checksums of the distribution file.",
+                        "type": "object",
+                        "properties": {
+                            "sha256": {
+                                "description": "The SHA256 checksum of the distribution file.",
+                                "type": "string"
+                            },
+                            "sha512": {
+                                "description": "The SHA512 checksum of the distribution file.",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "strip_components": {
+                        "description": "The strip components of the distribution file.",
+                        "type": "integer"
+                    },
+                    "unpack": {
+                        "description": "How to unpack the distribution file.",
+                        "enum": [
+                            "auto",
+                            "tar.auto",
+                            "raw",
+                            "tar",
+                            "tar.gz",
+                            "tar.bz2",
+                            "tar.lz4",
+                            "tar.xz",
+                            "tar.zst",
+                            "gz",
+                            "bz2",
+                            "lz4",
+                            "xz",
+                            "zst",
+                            "zip",
+                            "deb"
+                        ]
+                    },
+                    "fetch_restriction": {
+                        "description": "The fetch restriction of the distribution file.",
+                        "type": "object",
+                        "properties": {
+                            "msgid": {
+                                "description": "The message ID of the fetch restriction.",
+                                "type": "string"
+                            },
+                            "params": {
+                                "description": "The parameters of the fetch restriction.",
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "kind": {
+                        "items": {
+                            "contains": {
+                                "const": "toolchain"
+                            }
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "toolchain": {
+                        "description": "Extra information for the toolchain package.",
+                        "type": "object",
+                        "properties": {
+                            "target": {
+                                "description": "The target of the toolchain package.",
+                                "type": "string"
+                            },
+                            "flavors": {
+                                "description": "The flavors of the toolchain package.",
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "components": {
+                                "description": "The components of the toolchain package.",
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "include_sysroot": {
+                                "description": "Whether to include the sysroot.",
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "kind": {
+                        "items": {
+                            "contains": {
+                                "const": "emulator"
+                            }
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "emulator": {
+                        "description": "Extra information for the emulator package.",
+                        "type": "object",
+                        "properties": {
+                            "flavors": {
+                                "description": "The flavors of the emulator package.",
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "programs": {
+                                "description": "The programs of the emulator package.",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {
+                                            "description": "The path of the program.",
+                                            "type": "string"
+                                        },
+                                        "flavor": {
+                                            "description": "The flavor of the program.",
+                                            "type": "string"
+                                        },
+                                        "supported_arches": {
+                                            "description": "The supported architectures of the program.",
+                                            "type": "string"
+                                        },
+                                        "binfmt_misc": {
+                                            "description": "The binfmt_misc of the program.",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "kind": {
+                        "items": {
+                            "contains": {
+                                "const": "provisionable"
+                            }
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "partition_map": {
+                        "description": "The partition map of the provisionable package.",
+                        "type": "object",
+                        "patternProperties": {
+                            "^.*$": {
+                                "description": "A partition of the partition map.",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "strategy": {
+                        "description": "How to flash the dist file",
+                        "enum": [
+                            "dd-v1",
+                            "fastboot-v1",
+                            "fastboot-v1(lpi4a-uboot)"
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,86 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://www.ruyisdk.org/schema/profiles.schema.json",
+    "title": "Packages Index Profiles",
+    "type": "object",
+    "properties": {
+        "generic_opts": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "march": {
+                    "type": "string"
+                },
+                "mabi": {
+                    "type": "string"
+                },
+                "mcpu": {
+                    "type": "string"
+                }
+            }
+        },
+        "profiles": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "doc_uri": {
+                        "type": "string"
+                    },
+                    "need_flavor": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "march": {
+                        "type": "string"
+                    },
+                    "mabi": {
+                        "type": "string"
+                    },
+                    "mcpu": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "flavor_specific_mcpus": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "emulator_presets": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "required": [
+                        "need_flavor",
+                        "env"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "need_flavor": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "env": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
