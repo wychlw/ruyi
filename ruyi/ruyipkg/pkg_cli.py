@@ -12,10 +12,13 @@ from typing import (
     TYPE_CHECKING,
 )
 
+from ruyi.cli.completion import package_completer_builder
+
 if TYPE_CHECKING:
     from typing_extensions import Self
 
 from ..cli.cmd import RootCommand
+from ..cli.completion import SelfArgumentParser
 from ..config import GlobalConfig
 from ..log import RuyiLogger
 from ..telemetry.scope import TelemetryScope
@@ -38,7 +41,7 @@ class ListCommand(
     help="List available packages in configured repository",
 ):
     @classmethod
-    def configure_args(cls, gc: GlobalConfig, p: argparse.ArgumentParser) -> None:
+    def configure_args(cls, gc: GlobalConfig, p: SelfArgumentParser) -> None:
         p.add_argument(
             "--verbose",
             "-v",
@@ -296,7 +299,8 @@ def _do_list_non_verbose(
             else:
                 comments_str = ""
             slug_str = f" slug: [yellow]{ver.pm.slug}[/yellow]" if ver.pm.slug else ""
-            logger.stdout(f"  - [blue]{ver.pm.semver}[/blue]{comments_str}{slug_str}")
+            logger.stdout(
+                f"  - [blue]{ver.pm.semver}[/blue]{comments_str}{slug_str}")
 
     return 0
 
@@ -391,13 +395,13 @@ class ExtractCommand(
     help="Fetch package(s) then extract to current directory",
 ):
     @classmethod
-    def configure_args(cls, gc: GlobalConfig, p: argparse.ArgumentParser) -> None:
+    def configure_args(cls, gc: GlobalConfig, p: SelfArgumentParser) -> None:
         p.add_argument(
             "atom",
             type=str,
             nargs="+",
-            help="Specifier (atom) of the package(s) to extract",
-        )
+            help="Specifier (atom) of the package(s) to extract"
+        ).completer = package_completer_builder(gc)
         p.add_argument(
             "--host",
             type=str,
@@ -431,7 +435,8 @@ class ExtractCommand(
             bm = pm.binary_metadata
             sm = pm.source_metadata
             if bm is None and sm is None:
-                logger.F(f"don't know how to extract package [green]{pkg_name}[/green]")
+                logger.F(
+                    f"don't know how to extract package [green]{pkg_name}[/green]")
                 return 2
 
             if bm is not None and sm is not None:
@@ -481,14 +486,15 @@ class InstallCommand(
     aliases=["i"],
     help="Install package from configured repository",
 ):
+
     @classmethod
-    def configure_args(cls, gc: GlobalConfig, p: argparse.ArgumentParser) -> None:
+    def configure_args(cls, gc: GlobalConfig, p: SelfArgumentParser) -> None:
         p.add_argument(
             "atom",
             type=str,
             nargs="+",
-            help="Specifier (atom) of the package to install",
-        )
+            help="Specifier (atom) of the package to install"
+        ).completer=package_completer_builder(gc)
         p.add_argument(
             "-f",
             "--fetch-only",
@@ -621,7 +627,8 @@ def _do_install_binary_pkg(
 
     if is_installed:
         if not reinstall:
-            logger.I(f"skipping already installed package [green]{pkg_name}[/green]")
+            logger.I(
+                f"skipping already installed package [green]{pkg_name}[/green]")
             return 0
 
         logger.W(
@@ -683,7 +690,8 @@ def _do_install_binary_pkg_to(
     dfs = pm.distfiles()
 
     pkg_name = pm.name_for_installation
-    distfiles_for_host = bm.get_distfile_names_for_host(str(canonicalized_host))
+    distfiles_for_host = bm.get_distfile_names_for_host(
+        str(canonicalized_host))
     if not distfiles_for_host:
         logger.F(
             f"package [green]{pkg_name}[/green] declares no binary for host {canonicalized_host}"
@@ -741,7 +749,8 @@ def _do_install_blob_pkg(
 
     if is_installed:
         if not reinstall:
-            logger.I(f"skipping already installed package [green]{pkg_name}[/green]")
+            logger.I(
+                f"skipping already installed package [green]{pkg_name}[/green]")
             return 0
 
         logger.W(
@@ -802,7 +811,8 @@ def _do_install_blob_pkg_to(
     dfs = pm.distfiles()
     distfile_names = bm.get_distfile_names()
     if not distfile_names:
-        logger.F(f"package [green]{pkg_name}[/green] declares no blob distfile")
+        logger.F(
+            f"package [green]{pkg_name}[/green] declares no blob distfile")
         return 2
 
     for df_name in distfile_names:

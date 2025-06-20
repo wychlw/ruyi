@@ -1,3 +1,4 @@
+from functools import cached_property
 import os
 from typing import Final
 
@@ -13,34 +14,35 @@ from .unpack_method import UnpackMethod
 # https://github.com/ruyisdk/ruyi/issues/46
 HELP_ERROR_FETCHING: Final = """
 Downloads can fail for a multitude of reasons, most of which should not and
-cannot be handled by [yellow]Ruyi[/yellow]. For your convenience though, please check if any
+cannot be handled by [yellow]Ruyi[/]. For your convenience though, please check if any
 of the following common failure modes apply to you, and take actions
 accordingly if one of them turns out to be the case:
 
 * Basic connectivity problems
-    - is [yellow]the gateway[/yellow] reachable?
-    - is [yellow]common websites[/yellow] reachable?
-    - is there any [yellow]DNS pollution[/yellow]?
+    - is [yellow]the gateway[/] reachable?
+    - is [yellow]common websites[/] reachable?
+    - is there any [yellow]DNS pollution[/]?
 * Organizational and/or ISP restrictions
-    - is there a [yellow]firewall[/yellow] preventing Ruyi traffic?
-    - is your [yellow]ISP blocking access[/yellow] to the source website?
+    - is there a [yellow]firewall[/] preventing Ruyi traffic?
+    - is your [yellow]ISP blocking access[/] to the source website?
 * Volatile upstream
-    - is the recorded [yellow]link dead[/yellow]? (Please raise a Ruyi issue for a fix!)
+    - is the recorded [yellow]link dead[/]? (Please raise a Ruyi issue for a fix!)
 """
 
 
 class Distfile:
     def __init__(
         self,
-        urls: list[str],
-        dest: str,
         decl: DistfileDecl,
         mr: MetadataRepo,
     ) -> None:
-        self.urls = urls
-        self.dest = dest
         self._decl = decl
         self._mr = mr
+
+    @cached_property
+    def dest(self) -> str:
+        destdir = self._mr.global_config.ensure_distfiles_dir()
+        return os.path.join(destdir, self._decl.name)
 
     @property
     def size(self) -> int:
@@ -66,6 +68,10 @@ class Distfile:
     def is_fetch_restricted(self) -> bool:
         return self._decl.is_restricted("fetch")
 
+    @cached_property
+    def urls(self) -> list[str]:
+        return self._mr.get_distfile_urls(self._decl)
+
     def render_fetch_instructions(self, logger: RuyiLogger, lang_code: str) -> str:
         fr = self._decl.fetch_restriction
         if fr is None:
@@ -87,6 +93,16 @@ class Distfile:
             params.update(fr["params"])
 
         return self._mr.messages.render_message(fr["msgid"], lang_code, params)
+
+    def is_downloaded(self) -> bool:
+        """Check if the distfile has been downloaded. A return value of True
+        does NOT guarantee integrity."""
+
+        try:
+            st = os.stat(self.dest)
+            return st.st_size == self.size
+        except FileNotFoundError:
+            return False
 
     def ensure(self, logger: RuyiLogger) -> None:
         logger.D(f"checking {self.dest}")
